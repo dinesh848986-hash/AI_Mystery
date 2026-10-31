@@ -25,6 +25,6 @@ export function errorHandler(error, _req, res, _next) {
     message = error.message || 'The request could not be completed.';
   }
 
-  if (status >= 500) console.error('Request failed:', { name: error.name, code: error.code, message: error.message });
+  if (status >= 500) console.error('Request failed:', { name: error.name, code: error.code });
   res.status(status).json({ error: message });
 }
