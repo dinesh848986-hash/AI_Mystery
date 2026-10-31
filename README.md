@@ -23,4 +23,4 @@ Run `npm test` from `server` for unit and HTTP integration checks. Build the fro
 
 ## Deploy to Render
 
-The root `render.yaml` defines a single web service that builds the client and server together. Push this project to a GitHub repository, create a Render Blueprint from that repository, and provide `MONGODB_URI` and `GEMINI_API_KEY` as secret environment variables in Render. The deployment URL is assigned by Render after the first successful deploy. Keep `.env` out of Git.
+The root `render.yaml` defines a single web service that builds the client and server together. Create a Render Blueprint from the GitHub repository and provide `MONGODB_URI` as a secret environment variable. Add `GEMINI_API_KEY` as a secret environment variable if you want Gemini-generated mysteries; without it, the validated fallback mystery is used. The deployment URL is assigned by Render after the first successful deploy. Keep `.env` out of Git.
