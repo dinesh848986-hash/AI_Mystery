@@ -1,0 +1,70 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { submitAnswer } from '../src/controllers/api.js';
+import Mystery from '../src/models/Mystery.js';
+import GameSession from '../src/models/GameSession.js';
+import { publicMystery, calculateScore, canRequestHint } from '../src/services/gameRules.js';
+import { generatedMysterySchema } from '../src/validators/mystery.js';
+import { fallbackMystery, historicalMysteryCount, historicalMysteries } from '../src/services/fallbackMystery.js';
+
+test('public mystery projection never includes private answer material', () => {
+  const full = { _id: 'abc', ...fallbackMystery(), correctAnswerId: 'kian-das', explanation: 'private', hints: ['private'], answerEvidenceIds: ['ev-1'] };
+  const exposed = publicMystery(full);
+  assert.equal(exposed.correctAnswerId, undefined);
+  assert.equal(exposed.explanation, undefined);
+  assert.equal(exposed.hints, undefined);
+  assert.equal(exposed.answerEvidenceIds, undefined);
+  assert.equal(exposed.mysteryId, 'abc');
+});
+
+test('correct answer scoring follows hint deductions and wrong answers score zero', () => {
+  assert.deepEqual([0, 1, 2, 3].map((used) => calculateScore(true, used)), [100, 80, 60, 40]);
+  assert.equal(calculateScore(false, 0), 0);
+});
+
+test('hints stop at three and cannot be requested after completion', () => {
+  assert.equal(canRequestHint('active', 2), true);
+  assert.equal(canRequestHint('active', 3), false);
+  assert.equal(canRequestHint('completed', 0), false);
+});
+
+test('fallback and historical cases satisfy clue reference and answer secrecy checks', () => {
+  assert.equal(generatedMysterySchema.safeParse(fallbackMystery()).success, true);
+  assert.equal(historicalMysteryCount() >= 2, true);
+  for (const historical of historicalMysteries()) {
+    assert.equal(generatedMysterySchema.safeParse(historical).success, true);
+    const suspect = historical.suspects.find((person) => person.id === historical.correctAnswerId);
+    const clueText = [historical.scenario, ...historical.evidence.map((item) => item.content), ...historical.hints].join(' ').toLowerCase();
+    assert.equal(clueText.includes(suspect.name.toLowerCase()), false);
+    assert.equal(historical.answerEvidenceIds.every((id) => historical.evidence.some((item) => item.id === id)), true);
+    assert.equal(historical.suspects.length >= 3, true);
+  }
+});
+
+test('mystery schema rejects clues that name the culprit and dangling evidence references', () => {
+  const valid = fallbackMystery();
+  const leaked = { ...valid, hints: [...valid.hints.slice(0, 2), `It was ${valid.suspects[2].name}.`] };
+  assert.equal(generatedMysterySchema.safeParse(leaked).success, false);
+  const dangling = { ...valid, answerEvidenceIds: ['missing-clue'] };
+  assert.equal(generatedMysterySchema.safeParse(dangling).success, false);
+});
+
+test('answer submission atomically completes the session and returns the scored result', async (t) => {
+  const session = { _id: 'session-id', mysteryId: 'mystery-id', status: 'active', hintsUsed: 1 };
+  const mystery = {
+    suspects: [{ id: 'kian-das', name: 'Kian Das' }],
+    correctAnswerId: 'kian-das', explanation: 'The replay and field positions resolve the incident.', evidence: [],
+  };
+  t.mock.method(GameSession, 'findOne', () => session);
+  t.mock.method(Mystery, 'findById', () => ({ select: async () => mystery }));
+  t.mock.method(GameSession, 'findOneAndUpdate', async (_query, update) => ({ score: update.$set.score }));
+  let response;
+  await submitAnswer(
+    { params: { token: 'secure-token' }, body: { selectedAnswerId: 'kian-das' } },
+    { json: (body) => { response = body; } },
+    (error) => { throw error; },
+  );
+  assert.equal(response.correct, true);
+  assert.equal(response.score, 80);
+  assert.equal(session.status, 'active'); // Completion uses the guarded atomic update.
+});
