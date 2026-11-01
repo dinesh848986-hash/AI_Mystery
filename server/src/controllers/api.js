@@ -7,7 +7,7 @@ import { historicalMystery } from '../services/fallbackMystery.js';
 import { publicMystery, calculateScore } from '../services/gameRules.js';
 import { generationRequestSchema } from '../validators/mystery.js';
 
-const fail = (status, message) => Object.assign(new Error(message), { status });
+const fail = (status, message) => Object.assign(new Error(message), { status, exposeMessage: true });
 
 export async function health(_req, res) { res.json({ status: 'ok' }); }
 export async function readiness(_req, res) {

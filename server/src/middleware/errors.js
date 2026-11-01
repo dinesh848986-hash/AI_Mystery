@@ -21,7 +21,7 @@ export function errorHandler(error, _req, res, _next) {
   } else if (error.name === 'MongoServerSelectionError' || error.name === 'MongoNetworkError') {
     status = 503;
     message = 'The database is temporarily unavailable. Please try again shortly.';
-  } else if (status >= 400 && status < 500) {
+  } else if ((status >= 400 && status < 500) || error.exposeMessage === true) {
     message = error.message || 'The request could not be completed.';
   }
 
