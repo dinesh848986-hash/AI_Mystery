@@ -34,7 +34,11 @@ const fallbackCases = [
 export function fallbackMysteries() { return fallbackCases.map((item) => ({ ...structuredClone(item), difficulty: 'medium', format: 'T20' })); }
 const normalize = (value = '') => value.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').trim();
 const scenarioKey = (scenario) => createHash('sha256').update(normalize(scenario)).digest('hex');
-const isExcluded = (item, exclusions) => exclusions.some((excluded) => (typeof excluded === 'string' ? normalize(excluded) === normalize(item.incidentFingerprint) : normalize(excluded.incidentFingerprint) === normalize(item.incidentFingerprint) || excluded.scenarioKey === scenarioKey(item.scenario)));
+const isExcluded = (item, exclusions) => exclusions.some((excluded) => {
+  if (!excluded) return false;
+  if (typeof excluded === 'string') return normalize(excluded) === normalize(item.incidentFingerprint);
+  return (excluded.incidentFingerprint && normalize(excluded.incidentFingerprint) === normalize(item.incidentFingerprint)) || excluded.scenarioKey === scenarioKey(item.scenario);
+});
 export function fallbackMystery(difficulty = 'medium', format = 'T20', excludeFingerprints = []) {
   const available = fallbackCases.filter((item) => !isExcluded(item, excludeFingerprints));
   if (!available.length) return null;

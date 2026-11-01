@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { submitAnswer } from '../src/controllers/api.js';
 import Mystery from '../src/models/Mystery.js';
 import GameSession from '../src/models/GameSession.js';
@@ -57,6 +58,12 @@ test('fallback cases have distinct incident fingerprints, scenarios, and valid e
   assert.equal(new Set(cases.map((item) => item.scenario)).size, cases.length);
   for (const mystery of cases) assert.equal(generatedMysterySchema.safeParse(mystery).success, true);
   assert.equal(fallbackMystery('medium', 'T20', cases.map((item) => item.incidentFingerprint)), null);
+  assert.doesNotThrow(() => fallbackMystery('easy', 'T20', [undefined, { scenarioKey: 'legacy-record-without-fingerprint' }]));
+  const first = cases[0];
+  const normalized = first.scenario.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').trim();
+  const legacyRecord = { scenarioKey: createHash('sha256').update(normalized).digest('hex') };
+  const next = fallbackMystery('medium', 'T20', [legacyRecord]);
+  assert.notEqual(next.scenario, first.scenario);
 });
 
 test('answer submission atomically completes the session and returns the scored result', async (t) => {
