@@ -39,4 +39,20 @@ test('HTTP API health and invalid request handling', async (t) => {
   });
   assert.equal(oversized.status, 413);
   assert.match((await oversized.json()).error, /too large/);
+
+  // Simulate Render's one-hop proxy in a local test: clients sharing one
+  // forwarded address must share the existing 8-per-minute generation limit.
+  app.set('trust proxy', 1);
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const limited = await fetch(`${base}/mysteries`, {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '198.51.100.42' },
+      body: JSON.stringify({ difficulty: 'impossible' }),
+    });
+    assert.equal(limited.status, 400);
+  }
+  const rateLimited = await fetch(`${base}/mysteries`, {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '198.51.100.42' }, body: JSON.stringify({ difficulty: 'impossible' }),
+  });
+  assert.equal(rateLimited.status, 429);
+  app.set('trust proxy', false);
 });

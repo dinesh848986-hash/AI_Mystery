@@ -1,69 +1,56 @@
-export function fallbackMystery(difficulty = 'medium', format = 'T20') {
-  return {
-    title: 'The Vanishing Final Run', difficulty, format,
-    scenario: 'In the final over of the fictional Harbor Cup, North Quay needs four runs from two balls. A sharp return catches the non-striker short, but three fielders give different accounts of who collected and released the ball. One of them had no clear path to the stumps.',
-    suspects: [
-      { id: 'mira-sen', name: 'Mira Sen', role: 'Cover fielder', profile: 'A quick close-in fielder positioned just inside the ring on the off side.' },
-      { id: 'dev-arora', name: 'Dev Arora', role: 'Wicketkeeper', profile: 'The keeper stood behind the striker and could see the bowler and running batters.' },
-      { id: 'kian-das', name: 'Kian Das', role: 'Bowler', profile: 'Kian completed his follow-through toward the non-striker end after the delivery.' },
-    ],
-    evidence: [
-      { id: 'ev-1', type: 'timeline', title: 'Replay timeline', content: 'The throw came from deep midwicket and passed the bowler before reaching the non-striker end.' },
-      { id: 'ev-2', type: 'statement', title: 'Keeper statement', content: 'Dev says he stayed behind the striker stumps throughout the play and never touched the return.' },
-      { id: 'ev-3', type: 'statement', title: 'Bowler statement', content: 'Kian says he was still moving toward the non-striker end when the ball passed on his off side.' },
-      { id: 'ev-4', type: 'statistics', title: 'Fielding positions', content: 'The field chart places Mira at cover, well away from the deep midwicket return line.' },
-    ],
-    correctAnswerId: 'kian-das',
-    answerEvidenceIds: ['ev-1', 'ev-3', 'ev-4'],
-    explanation: 'The replay establishes that the throw passed the bowler on his off side as he moved toward the non-striker end. The keeper remained behind the striker and the cover fielder was away from the return line, leaving Kian as the player who redirected the ball toward the stumps.',
-    hints: ['Trace the ball’s route from deep midwicket toward the non-striker end.', 'Compare the stated fielding positions with the throw’s path.', 'The player moving toward the non-striker end was the only one on the return line.'],
-  };
-}
+import { createHash } from 'node:crypto';
 
-const historicalCases = [
+const fallbackCases = [
   {
-    title: 'The Direct Hit at Old Trafford', type: 'historical', difficulty: 'easy', format: 'ODI',
-    scenario: 'At Old Trafford in the 2019 Cricket World Cup semi-final, India were chasing New Zealand’s 239. With the innings nearing its end, MS Dhoni attempted a run and was dismissed short of his ground. The scorecard records the dismissal. Which New Zealand player made the decisive throw?',
-    suspects: [
-      { id: 'martin-guptill', name: 'Martin Guptill', role: 'New Zealand fielder', profile: 'A New Zealand outfielder involved in the late innings fielding effort.' },
-      { id: 'trent-boult', name: 'Trent Boult', role: 'New Zealand bowler', profile: 'A New Zealand left-arm fast bowler who played in the semi-final.' },
-      { id: 'ross-taylor', name: 'Ross Taylor', role: 'New Zealand batter', profile: 'A New Zealand middle-order batter who played in the semi-final.' },
-    ],
-    evidence: [
-      { id: 'hist-1', type: 'statistics', title: 'The scorecard', content: 'The Pakistan Cricket Board scorecard records Dhoni’s dismissal as a run out in the 48th over, after he had scored 50 from 72 balls.' },
-      { id: 'hist-2', type: 'timeline', title: 'The chase', content: 'India were dismissed for 221 in 49.3 overs, falling 18 runs short of New Zealand’s 239.' },
-      { id: 'hist-3', type: 'statistics', title: 'The innings', content: 'Dhoni’s half-century came from 72 deliveries before his run out ended India’s eighth wicket.' },
-    ],
-    correctAnswerId: 'martin-guptill',
-    answerEvidenceIds: ['hist-1'],
-    explanation: 'The official PCB scorecard records MS Dhoni as run out by Martin Guptill for 50. New Zealand won the first semi-final by 18 runs. The scorecard is the factual source for this historical case.',
-    sourceUrl: 'https://www.pcb.com.pk/icc-world-cup-2019/match/32694.html',
-    hints: ['Look at the wording used in the scorecard’s dismissal entry.', 'The scorecard credits the fielder involved in the run out.', 'The player credited was positioned in the deep field during the chase.'],
+    category: 'fielding', incidentFingerprint: 'harbor-cup-final-over-return-to-non-striker', title: 'The Vanishing Final Run',
+    scenario: 'In the final over of the fictional Harbor Cup, North Quay needs four runs from two balls. A sharp return catches the non-striker short, but three fielders give different accounts of who collected and released the ball. One of them had no clear path to the stumps.',
+    suspects: [{ id: 'mira-sen', name: 'Mira Sen', role: 'Cover fielder', profile: 'A quick close-in fielder positioned just inside the ring on the off side.' }, { id: 'dev-arora', name: 'Dev Arora', role: 'Wicketkeeper', profile: 'The keeper stood behind the striker and could see the bowler and running batters.' }, { id: 'kian-das', name: 'Kian Das', role: 'Bowler', profile: 'Kian completed his follow-through toward the non-striker end after the delivery.' }],
+    evidence: [{ id: 'ev-1', type: 'timeline', title: 'Replay timeline', content: 'The throw came from deep midwicket and passed the bowler before reaching the non-striker end.' }, { id: 'ev-2', type: 'statement', title: 'Keeper statement', content: 'Dev says he stayed behind the striker stumps throughout the play and never touched the return.' }, { id: 'ev-3', type: 'statement', title: 'Bowler statement', content: 'Kian says he was still moving toward the non-striker end when the ball passed on his off side.' }, { id: 'ev-4', type: 'statistics', title: 'Fielding positions', content: 'The field chart places Mira at cover, well away from the deep midwicket return line.' }],
+    correctAnswerId: 'kian-das', answerEvidenceIds: ['ev-1', 'ev-3', 'ev-4'], explanation: 'The replay establishes that the return passed the bowler on his off side as he moved toward the non-striker end. The keeper remained behind the striker and the cover fielder was away from the return line, leaving Kian as the player who redirected the ball toward the stumps.', hints: ['Trace the ball’s route from deep midwicket toward the non-striker end.', 'Compare the stated fielding positions with the throw’s path.', 'The player moving toward the non-striker end was the only one on the return line.'],
   },
   {
-    title: 'The Oval Run-Out', type: 'historical', difficulty: 'medium', format: 'ODI',
-    scenario: 'In the 2019 Cricket World Cup match at the Oval, Bangladesh were batting against New Zealand. Mushfiqur Rahim was run out for 19 after facing 35 balls. Three New Zealand players are listed as suspects. Which one is credited with the dismissal?',
-    suspects: [
-      { id: 'martin-guptill', name: 'Martin Guptill', role: 'New Zealand fielder', profile: 'A New Zealand opening batter who also fields during the opposition innings.' },
-      { id: 'trent-boult', name: 'Trent Boult', role: 'New Zealand bowler', profile: 'A New Zealand left-arm fast bowler who played in this fixture.' },
-      { id: 'lockie-ferguson', name: 'Lockie Ferguson', role: 'New Zealand bowler', profile: 'A New Zealand fast bowler who played in this fixture.' },
-    ],
-    evidence: [
-      { id: 'oval-1', type: 'statistics', title: 'Dismissal entry', content: 'The PCB scorecard records Mushfiqur Rahim’s dismissal as a run out for 19 from 35 balls.' },
-      { id: 'oval-2', type: 'timeline', title: 'Match context', content: 'This was the ninth match of the 2019 ICC Cricket World Cup, played at the Oval on 5 June.' },
-      { id: 'oval-3', type: 'statistics', title: 'Result', content: 'New Zealand won the match by two wickets while chasing Bangladesh’s total.' },
-    ],
-    correctAnswerId: 'martin-guptill',
-    answerEvidenceIds: ['oval-1'],
-    explanation: 'The official PCB scorecard credits Martin Guptill with the run out of Mushfiqur Rahim. New Zealand won the ninth match of the 2019 World Cup by two wickets.',
-    sourceUrl: 'https://www.pcb.com.pk/icc-world-cup-2019/match/32648.html',
-    hints: ['The dismissal type narrows the relevant scorecard entry.', 'The batting row includes the fielder credited with the run out.', 'Check the name credited beside “run out” in the official scorecard.'],
+    category: 'last-over', incidentFingerprint: 'lantern-league-last-over-boundary-count-dispute', title: 'Four Runs on the Rope',
+    scenario: 'In the fictional Lantern League final, Bellport needs six from the last ball. The batter drives toward long-on and the boundary signal is disputed: the scorers enter four, while the fielding captain insists the ball was stopped inside the rope. Which account matches the replay and scoring sheet?',
+    suspects: [{ id: 'tara-iyer', name: 'Tara Iyer', role: 'Square-leg umpire', profile: 'Tara watched the rope from the square-leg side and signalled four after checking with the boundary official.' }, { id: 'omar-vale', name: 'Omar Vale', role: 'Long-on fielder', profile: 'Omar chased the ball toward the rope and reported that he had kept it in play.' }, { id: 'lee-marlow', name: 'Lee Marlow', role: 'Scorer', profile: 'Lee entered the total shown on the umpire signal and did not view the replay.' }],
+    evidence: [{ id: 'ev-1', type: 'timeline', title: 'Replay frame', content: 'The ball touches the boundary cushion before Omar’s hand makes contact with it.' }, { id: 'ev-2', type: 'statistics', title: 'Scoring sheet', content: 'The official over sheet records four runs from the final delivery, matching the umpire signal.' }, { id: 'ev-3', type: 'statement', title: 'Omar’s account', content: 'Omar says he stopped the ball in play, but the replay shows the cushion moved before his touch.' }],
+    correctAnswerId: 'omar-vale', answerEvidenceIds: ['ev-1', 'ev-3'], explanation: 'The replay shows the ball had already touched the boundary cushion before Omar touched it. His statement that he stopped it in play conflicts with the decisive frame; the four runs on the scoring sheet are correct.', hints: ['The order of contact matters more than the fielder’s final position.', 'Compare Omar’s statement with the replay frame.', 'The ball reached the cushion before Omar’s hand.'],
+  },
+  {
+    category: 'scorecard', incidentFingerprint: 'copper-cup-scorebook-extra-run-over-total', title: 'The Run That Wasn’t There',
+    scenario: 'During a fictional Copper Cup chase, the scoreboard shows 143 after 19 overs, but the signed over-by-over sheet totals 142. Three officials describe how the final run was entered. Identify the person whose action created the discrepancy.',
+    suspects: [{ id: 'nina-roy', name: 'Nina Roy', role: 'Striker', profile: 'Nina completed the final run of the 19th over and returned to the striker’s end.' }, { id: 'ezra-kent', name: 'Ezra Kent', role: 'Square-leg umpire', profile: 'Ezra signalled a wide earlier in the over and confirmed the completed run afterward.' }, { id: 'pavel-shah', name: 'Pavel Shah', role: 'Scorer', profile: 'Pavel entered the wide as one run, then also added a completed run from the same delivery.' }],
+    evidence: [{ id: 'ev-1', type: 'statistics', title: 'Over sheet', content: 'The signed sheet lists one wide and five completed runs across the over, for six total.' }, { id: 'ev-2', type: 'timeline', title: 'Scoring log', content: 'The digital log adds one extra run immediately after the wide entry, before the next legal ball.' }, { id: 'ev-3', type: 'statement', title: 'Scorer’s note', content: 'Pavel confirms he entered the wide, then added the batter’s run from that same delivery as a separate extra.' }],
+    correctAnswerId: 'pavel-shah', answerEvidenceIds: ['ev-1', 'ev-2', 'ev-3'], explanation: 'The signed sheet includes the wide as one run and does not record an additional completed run on that delivery. Pavel’s note and the digital log show he counted both, creating the one-run difference.', hints: ['Compare the total on the signed sheet with the digital log sequence.', 'A wide already contributes to the team total.', 'The scorer added a second entry for the same delivery.'],
+  },
+  {
+    category: 'statements', incidentFingerprint: 'ridge-county-conflicting-player-statements-ball-touch', title: 'The Silent Deflection',
+    scenario: 'In a fictional Ridge County league match, a low catch is claimed at short cover after the ball appears to change direction. Two fielders and the batter disagree about a possible touch before the catch. Which fielder’s account is contradicted by the evidence?',
+    suspects: [{ id: 'sana-bedi', name: 'Sana Bedi', role: 'Short cover', profile: 'Sana claimed the low catch and said the ball came straight off the bat.' }, { id: 'jules-park', name: 'Jules Park', role: 'Bowler', profile: 'Jules delivered the ball and watched the batter’s shot from the pitch.' }, { id: 'ronan-lowe', name: 'Ronan Lowe', role: 'Mid-off', profile: 'Ronan was positioned several metres behind Sana and had a side-on view.' }],
+    evidence: [{ id: 'ev-1', type: 'timeline', title: 'Video sequence', content: 'The ball changes direction after passing Sana’s left hand, then drops into her cupped hands.' }, { id: 'ev-2', type: 'statement', title: 'Sana’s report', content: 'Sana states she made no contact until the ball was already inside both hands.' }, { id: 'ev-3', type: 'profile', title: 'Viewing angle', content: 'Ronan’s side-on position gives a clear view of the gap between the first deflection and the catch.' }],
+    correctAnswerId: 'sana-bedi', answerEvidenceIds: ['ev-1', 'ev-2'], explanation: 'The video shows the ball changing direction after it passes Sana’s hand, before she completes the catch. That sequence contradicts her statement that she first touched it only after it was in both hands.', hints: ['Focus on the first change in the ball’s path.', 'The contact happens before the ball settles into the catch.', 'Compare the video sequence with Sana’s account.'],
   },
 ];
 
-export function historicalMystery() {
-  return structuredClone(historicalCases[Math.floor(Math.random() * historicalCases.length)]);
+export function fallbackMysteries() { return fallbackCases.map((item) => ({ ...structuredClone(item), difficulty: 'medium', format: 'T20' })); }
+const normalize = (value = '') => value.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').trim();
+const scenarioKey = (scenario) => createHash('sha256').update(normalize(scenario)).digest('hex');
+const isExcluded = (item, exclusions) => exclusions.some((excluded) => (typeof excluded === 'string' ? normalize(excluded) === normalize(item.incidentFingerprint) : normalize(excluded.incidentFingerprint) === normalize(item.incidentFingerprint) || excluded.scenarioKey === scenarioKey(item.scenario)));
+export function fallbackMystery(difficulty = 'medium', format = 'T20', excludeFingerprints = []) {
+  const available = fallbackCases.filter((item) => !isExcluded(item, excludeFingerprints));
+  if (!available.length) return null;
+  const mystery = available[Math.floor(Math.random() * available.length)];
+  return { ...structuredClone(mystery), difficulty, format };
 }
 
-export function historicalMysteryCount() { return historicalCases.length; }
+const historicalCases = [
+  { category: 'dismissal', incidentFingerprint: 'wc2019-ind-nz-semi-dhoni-runout', title: 'The Direct Hit at Old Trafford', type: 'historical', difficulty: 'easy', format: 'ODI', scenario: 'At Old Trafford in the 2019 Cricket World Cup semi-final, India chased New Zealand’s 239. MS Dhoni was run out for 50 from 72 balls in the 49th over. Which New Zealand player was credited with the dismissal?', suspects: [{ id: 'martin-guptill', name: 'Martin Guptill', role: 'New Zealand fielder', profile: 'A New Zealand outfielder involved in the late innings fielding effort.' }, { id: 'trent-boult', name: 'Trent Boult', role: 'New Zealand bowler', profile: 'A New Zealand left-arm fast bowler who played in the semi-final.' }, { id: 'ross-taylor', name: 'Ross Taylor', role: 'New Zealand batter', profile: 'A New Zealand middle-order batter who played in the semi-final.' }], evidence: [{ id: 'hist-1', type: 'statistics', title: 'The scorecard', content: 'The official PCB scorecard records the dismissal as “run out Martin Guptill” for 50 from 72 balls.' }, { id: 'hist-2', type: 'timeline', title: 'The chase', content: 'India were dismissed for 221 in 49.3 overs, falling 18 runs short of New Zealand’s 239.' }, { id: 'hist-3', type: 'statistics', title: 'The innings', content: 'Dhoni’s dismissal ended India’s eighth wicket at 216 in the 48th over.' }], correctAnswerId: 'martin-guptill', answerEvidenceIds: ['hist-1'], explanation: 'The official PCB scorecard credits Martin Guptill with the run out of MS Dhoni. New Zealand won by 18 runs.', sourceUrl: 'https://www.pcb.com.pk/icc-world-cup-2019/match/32694.html', hints: ['Read the scorecard’s dismissal entry.', 'The fielder’s name is written directly beside “run out”.', 'The scorecard supplies the decisive attribution.'] },
+  { category: 'dismissal', incidentFingerprint: 'wc2019-ban-nz-oval-mushfiqur-runout', title: 'The Oval Run-Out', type: 'historical', difficulty: 'medium', format: 'ODI', scenario: 'At the Oval on 5 June 2019, Bangladesh played New Zealand in the Cricket World Cup. Mushfiqur Rahim was run out for 19 from 35 balls. Which New Zealand player was credited with the dismissal?', suspects: [{ id: 'martin-guptill', name: 'Martin Guptill', role: 'New Zealand fielder', profile: 'A New Zealand opening batter who also fields during the opposition innings.' }, { id: 'trent-boult', name: 'Trent Boult', role: 'New Zealand bowler', profile: 'A New Zealand left-arm fast bowler who played in this fixture.' }, { id: 'lockie-ferguson', name: 'Lockie Ferguson', role: 'New Zealand bowler', profile: 'A New Zealand fast bowler who played in this fixture.' }], evidence: [{ id: 'oval-1', type: 'statistics', title: 'Dismissal entry', content: 'The scorecard credits Mushfiqur Rahim’s run out to Martin Guptill (M Guptill) for 19.' }, { id: 'oval-2', type: 'timeline', title: 'Match context', content: 'This was the ninth match of the 2019 ICC Cricket World Cup, played at the Oval on 5 June.' }, { id: 'oval-3', type: 'statistics', title: 'Result', content: 'New Zealand won the match by two wickets while chasing Bangladesh’s total.' }], correctAnswerId: 'martin-guptill', answerEvidenceIds: ['oval-1'], explanation: 'The match scorecard credits Martin Guptill with Mushfiqur Rahim’s run out. New Zealand won the ninth match by two wickets.', sourceUrl: 'https://www.pcb.com.pk/icc-world-cup-2019/match/32648.html', hints: ['The scorecard’s dismissal entry names the fielder.', 'Look for the name in parentheses after “run out”.', 'The scorecard supplies the decisive attribution.'] },
+];
+
+export function historicalMystery(excludeFingerprints = []) {
+  const available = historicalCases.filter((item) => !isExcluded(item, excludeFingerprints));
+  if (!available.length) return null;
+  return structuredClone(available[Math.floor(Math.random() * available.length)]);
+}
 export function historicalMysteries() { return structuredClone(historicalCases); }
+export function historicalMysteryCount() { return historicalCases.length; }

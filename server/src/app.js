@@ -8,6 +8,9 @@ import api from './routes/api.js';
 import { notFound, errorHandler } from './middleware/errors.js';
 
 const app = express();
+// Render terminates TLS and forwards one trusted proxy hop to the service.
+// Restrict trust to that hop; never trust arbitrary client-supplied chains.
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {

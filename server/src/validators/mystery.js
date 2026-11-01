@@ -3,6 +3,9 @@ import { z } from 'zod';
 const suspect = z.object({ id: z.string().min(1), name: z.string().min(2), role: z.string().min(1), profile: z.string().min(12) });
 const evidence = z.object({ id: z.string().min(1), type: z.enum(['profile', 'statistics', 'statement', 'timeline']), title: z.string().min(2), content: z.string().min(12) });
 export const generatedMysterySchema = z.object({
+  type: z.enum(['fictional', 'historical']).optional(),
+  category: z.enum(['dismissal', 'last-over', 'scorecard', 'statements', 'fielding', 'qualification', 'records', 'fictional']),
+  incidentFingerprint: z.string().min(12),
   title: z.string().min(5), difficulty: z.enum(['easy', 'medium', 'hard']), format: z.enum(['T20', 'ODI', 'Test']),
   scenario: z.string().min(40), suspects: z.array(suspect).min(3).max(5), evidence: z.array(evidence).min(3),
   correctAnswerId: z.string().min(1), answerEvidenceIds: z.array(z.string().min(1)).min(1),
@@ -21,7 +24,10 @@ export const generatedMysterySchema = z.object({
     ctx.addIssue({ code: 'custom', path: ['answerEvidenceIds'], message: 'Answer evidence must reference existing clues' });
   }
   const answer = mystery.suspects.find((person) => person.id === mystery.correctAnswerId);
-  const publicClues = [mystery.scenario, ...mystery.evidence.map((item) => `${item.title} ${item.content}`), ...mystery.hints].join(' ').toLocaleLowerCase();
+  // Historical scorecard evidence may name the credited player because that
+  // source is the factual proof players are asked to inspect. Fictional cases
+  // keep the answer out of every pre-submission clue.
+  const publicClues = [mystery.scenario, ...(mystery.type === 'historical' ? [] : mystery.evidence.map((item) => `${item.title} ${item.content}`)), ...mystery.hints].join(' ').toLocaleLowerCase();
   if (answer && [answer.name, answer.id].some((needle) => needle.length > 2 && publicClues.includes(needle.toLocaleLowerCase()))) {
     ctx.addIssue({ code: 'custom', path: ['evidence'], message: 'Public clues and hints must not name the answer directly' });
   }

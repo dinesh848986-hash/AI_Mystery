@@ -5,7 +5,7 @@ import Mystery from '../src/models/Mystery.js';
 import GameSession from '../src/models/GameSession.js';
 import { publicMystery, calculateScore, canRequestHint } from '../src/services/gameRules.js';
 import { generatedMysterySchema } from '../src/validators/mystery.js';
-import { fallbackMystery, historicalMysteryCount, historicalMysteries } from '../src/services/fallbackMystery.js';
+import { fallbackMystery, fallbackMysteries, historicalMysteryCount, historicalMysteries } from '../src/services/fallbackMystery.js';
 
 test('public mystery projection never includes private answer material', () => {
   const full = { _id: 'abc', ...fallbackMystery(), correctAnswerId: 'kian-das', explanation: 'private', hints: ['private'], answerEvidenceIds: ['ev-1'] };
@@ -35,7 +35,7 @@ test('fallback and historical cases satisfy clue reference and answer secrecy ch
     assert.equal(generatedMysterySchema.safeParse(historical).success, true);
     const suspect = historical.suspects.find((person) => person.id === historical.correctAnswerId);
     const clueText = [historical.scenario, ...historical.evidence.map((item) => item.content), ...historical.hints].join(' ').toLowerCase();
-    assert.equal(clueText.includes(suspect.name.toLowerCase()), false);
+    assert.equal([historical.scenario, ...historical.hints].join(' ').toLowerCase().includes(suspect.name.toLowerCase()), false);
     assert.equal(historical.answerEvidenceIds.every((id) => historical.evidence.some((item) => item.id === id)), true);
     assert.equal(historical.suspects.length >= 3, true);
   }
@@ -43,10 +43,20 @@ test('fallback and historical cases satisfy clue reference and answer secrecy ch
 
 test('mystery schema rejects clues that name the culprit and dangling evidence references', () => {
   const valid = fallbackMystery();
-  const leaked = { ...valid, hints: [...valid.hints.slice(0, 2), `It was ${valid.suspects[2].name}.`] };
+  const culprit = valid.suspects.find((person) => person.id === valid.correctAnswerId);
+  const leaked = { ...valid, hints: [...valid.hints.slice(0, 2), `It was ${culprit.name}.`] };
   assert.equal(generatedMysterySchema.safeParse(leaked).success, false);
   const dangling = { ...valid, answerEvidenceIds: ['missing-clue'] };
   assert.equal(generatedMysterySchema.safeParse(dangling).success, false);
+});
+
+test('fallback cases have distinct incident fingerprints, scenarios, and valid evidence', () => {
+  const cases = fallbackMysteries();
+  assert.equal(cases.length >= 4, true);
+  assert.equal(new Set(cases.map((item) => item.incidentFingerprint)).size, cases.length);
+  assert.equal(new Set(cases.map((item) => item.scenario)).size, cases.length);
+  for (const mystery of cases) assert.equal(generatedMysterySchema.safeParse(mystery).success, true);
+  assert.equal(fallbackMystery('medium', 'T20', cases.map((item) => item.incidentFingerprint)), null);
 });
 
 test('answer submission atomically completes the session and returns the scored result', async (t) => {

@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import mongoose from 'mongoose';
 import Mystery from '../models/Mystery.js';
 import GameSession from '../models/GameSession.js';
@@ -17,10 +17,23 @@ export async function readiness(_req, res) {
 export async function createMystery(req, res, next) {
   try {
     const input = generationRequestSchema.parse(req.body || {});
-    const data = input.type === 'historical' ? historicalMystery() : await generateMystery(input.difficulty, input.format);
+    const history = await Mystery.find({}, { scenario: 1, scenarioKey: 1, incidentFingerprint: 1 }).lean();
+    const normalize = (value = '') => value.toLocaleLowerCase('en').normalize('NFKD').replace(/[^a-z0-9]+/g, ' ').trim();
+    for (const prior of history) {
+      if (!prior.scenarioKey && prior.scenario) prior.scenarioKey = createHash('sha256').update(normalize(prior.scenario)).digest('hex');
+      if (prior.incidentFingerprint) prior.incidentFingerprint = normalize(prior.incidentFingerprint);
+    }
+    const data = input.type === 'historical'
+      ? historicalMystery(history)
+      : await generateMystery(input.difficulty, input.format, history);
+    if (!data) throw fail(503, 'No unused cases are available right now. Please try again later.');
     const mystery = await Mystery.create({ ...data, type: input.type });
     res.status(201).json(publicMystery(mystery));
-  } catch (error) { if (error.name === 'ZodError') return res.status(400).json({ error: 'Choose an available difficulty and cricket format.' }); next(error); }
+  } catch (error) {
+    if (error.name === 'ZodError') return res.status(400).json({ error: 'Choose an available difficulty and cricket format.' });
+    if (error.code === 11000) return res.status(503).json({ error: 'A duplicate case was detected. Please try again for a new mystery.' });
+    next(error);
+  }
 }
 export async function getMystery(req, res, next) {
   try { const mystery = await Mystery.findOne({ _id: req.params.id, status: 'active' }); if (!mystery) throw fail(404, 'Mystery not found.'); res.json(publicMystery(mystery)); }
