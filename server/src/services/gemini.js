@@ -12,9 +12,15 @@ export async function generateMystery(difficulty, format, excluded = []) {
     console.info('Gemini API key is not configured; trying an unused validated fallback mystery.');
     return fallbackMystery(difficulty, format, excludedFingerprints);
   }
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  // Bound each provider call and disable SDK-level retries. The route has its
+  // own duplicate retries and must reach its fallback before the browser's
+  // 30-second request deadline.
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+    httpOptions: { timeout: 7_000, retryOptions: { attempts: 1 } },
+  });
   const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-  for (let attempt = 0; attempt < 4; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       const response = await ai.models.generateContent({ model, contents: promptFor(difficulty, format, excluded), config: { responseMimeType: 'application/json' } });
       const parsed = generatedMysterySchema.parse(JSON.parse(response.text));
